@@ -2,8 +2,9 @@ require "active_support/lazy_load_hooks"
 require "active_support/lazy_load_patch/version"
 
 module ActiveSupport
-  @load_hooks = Hash.new { |h,k| h[k] = [] }
+  @loaded_prev = @loaded
   @loaded = Hash.new { |h,k| h[k] = [] }
+  @loaded_prev.each { |k, v| @loaded[k] << v }
 
   def self.on_load(name, options = {}, &block)
     @loaded[name].each do |base|
@@ -11,14 +12,6 @@ module ActiveSupport
     end
 
     @load_hooks[name] << [block, options]
-  end
-
-  def self.execute_hook(base, options, block)
-    if options[:yield]
-      block.call(base)
-    else
-      base.instance_eval(&block)
-    end
   end
 
   def self.run_load_hooks(name, base = Object)
